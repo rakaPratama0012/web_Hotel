@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Hotel Melati</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,sans-serif; }
+body { background:#f4f6f9; color:#333; }
+header { background:linear-gradient(135deg,#0f5132,#198754); color:#fff; padding:15px 25px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; flex-wrap:wrap; gap:10px; box-shadow:0 2px 10px rgba(0,0,0,.2); }
+header h1 { font-size:1.4rem; }
+header h1 small { font-size:.7rem; display:block; opacity:.8; font-weight:400; }
+header nav { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+header nav button { background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.3); padding:8px 14px; border-radius:6px; cursor:pointer; font-size:.85rem; transition:.2s; display:flex; align-items:center; gap:5px; }
+header nav button:hover, header nav button.active { background:#fff; color:#0f5132; }
+
+.container { max-width:1100px; margin:0 auto; padding:20px; }
+.section { display:none; }
+.section.active { display:block; }
+.section-title { font-size:1.4rem; margin:20px 0 15px; color:#0f5132; }
+.form-subtitle { font-size:.95rem; color:#0f5132; margin-bottom:10px; border-bottom:2px solid #e7f5ee; padding-bottom:5px; }
+
+.form-card { background:#fff; border-radius:12px; padding:22px; box-shadow:0 4px 15px rgba(0,0,0,.08); margin-bottom:20px; }
+.form-group { margin-bottom:14px; }
+.form-group label { display:block; font-weight:600; margin-bottom:5px; font-size:.85rem; color:#444; }
+.form-group input, .form-group select { width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:.9rem; }
+.form-group input:focus { outline:2px solid #198754; border-color:#198754; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.btn-primary { background:#198754; color:#fff; border:none; padding:12px 20px; border-radius:8px; font-size:.95rem; font-weight:600; cursor:pointer; transition:.2s; }
+.btn-primary:hover { background:#0f5132; }
+.btn-danger { background:#dc3545; color:#fff; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-size:.8rem; }
+.btn-warning { background:#ffc107; color:#000; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-size:.8rem; }
+.btn-sm { padding:6px 12px; font-size:.8rem; }
+
+.table-wrap { overflow-x:auto; background:#fff; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,.08); margin-bottom:20px; }
+table { width:100%; border-collapse:collapse; font-size:.85rem; min-width:900px; }
+th { background:#0f5132; color:#fff; padding:12px 10px; text-align:left; font-weight:600; }
+td { padding:10px; border-bottom:1px solid #eee; vertical-align:top; }
+tr:hover { background:#f9fffc; }
+
+.status { padding:4px 12px; border-radius:20px; font-size:.75rem; font-weight:600; display:inline-block; }
+.status.confirmed { background:#d4edda; color:#155724; }
+.status.pending { background:#fff3cd; color:#856404; }
+.status.cancelled { background:#f8d7da; color:#721c24; }
+.status.checkedin { background:#cfe2ff; color:#084298; }
+.status.checkedout { background:#e2e3e5; color:#41464b; }
+.bank-card { background:#fff; border-radius:10px; padding:15px; margin-bottom:12px; border-left:5px solid #198754; box-shadow:0 2px 8px rgba(0,0,0,.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+.bank-card .bank-name { font-weight:700; color:#0f5132; font-size:1rem; }
+.bank-card .bank-no { font-family:'Courier New',monospace; font-size:1rem; letter-spacing:1px; }
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:20px; }
+.stat-box { background:#fff; padding:15px; border-radius:10px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.stat-box .num { font-size:1.5rem; font-weight:700; color:#198754; }
+.stat-box .lbl { font-size:.75rem; color:#777; }
+.toast { position:fixed; bottom:25px; right:25px; background:#198754; color:#fff; padding:14px 22px; border-radius:8px; box-shadow:0 5px 20px rgba(0,0,0,.3); transform:translateX(400px); transition:.4s; z-index:2000; max-width:300px; }
+.toast.show { transform:translateX(0); }
+.toast.error { background:#dc3545; }
+.empty { text-align:center; color:#999; padding:40px; }
+.note { font-size:.8rem; color:#777; font-style:italic; }
+.info-box { background:#e7f3ff; border-left:4px solid #0d6efd; padding:12px; border-radius:6px; font-size:.85rem; color:#084298; margin-bottom:15px; }
+footer { background:#0f5132; color:#fff; text-align:center; padding:20px; margin-top:30px; font-size:.85rem; }
+
+.auth-container { max-width:400px; margin:80px auto; background:#fff; padding:30px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.1); }
+
+@media(max-width:600px) {
+  .form-row { grid-template-columns:1fr; }
+  header h1 { font-size:1.1rem; }
+  header nav button { font-size:.75rem; padding:6px 10px; }
+}
+</style>
+</head>
+<body>
+
+<header id="mainHeader" style="display:none;">
+  <h1>🔐 Panel Admin <small>Hotel Melati</small></h1>
+  <nav>
+    <button onclick="showSection('dashboard')" class="active" id="nav-dashboard">📊 Dashboard</button>
+    <button onclick="showSection('booking')" id="nav-booking">📋 Data Booking</button>
+    <button onclick="showSection('kamar')" id="nav-kamar">🛏️ Data Kamar</button>
+    <button onclick="showSection('dapur')" id="nav-dapur">🍽️ Data Dapur</button>
+    <button onclick="showSection('rekening')" id="nav-rekening">🏦 Rekening</button>
+    <button onclick="window.location.href='index.html'" style="background:#ff6b35; border:none;">🏠 Ke Halaman Tamu</button>
+    <button onclick="logoutAdmin()" style="background:#dc3545; border:none;">🚪 Logout</button>
+  </nav>
+</header>
+
+<div class="container" id="authSection">
+  <div class="auth-container">
+    <h2 class="section-title" style="text-align:center;">Login Admin</h2>
+    <p class="note" style="text-align:center; margin-bottom:20px;">Masukkan kredensial pengelola hotel</p>
+    <div class="form-group">
+      <label>Password Admin</label>
+      <input type="password" id="adminPass" placeholder="Masukkan password" onkeypress="if(event.key === 'Enter') loginAdmin()">
+    </div>
+    <button class="btn-primary" style="width:100%;" onclick="loginAdmin()">Login</button>
+    <p class="note" style="margin-top:10px; text-align:center;">Password default: <b>admin123</b></p>
+  </div>
+</div>
+
+<div class="container" id="mainApp" style="display:none;">
+
+  <section class="section active" id="section-dashboard">
+    <h2 class="section-title">📊 Statistik Hotel</h2>
+    <div class="stats" id="statsBox"></div>
+    
+    <div class="form-card" style="border:2px solid #198754; background:#f0f8f4;">
+      <h3 class="form-subtitle" style="color:#0f5132;">💳 Verifikasi Pembayaran Tamu</h3>
+      <p class="note" style="margin-bottom:10px;">Cek mutasi rekening Anda. Jika dana sudah masuk, verifikasi di sini menggunakan Kode Booking dan Nama Tamu. <b>Notifikasi Lunas & Jam Check-in akan otomatis terkirim ke tamu.</b></p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Kode Booking</label>
+          <input type="text" id="verifyCode" placeholder="Contoh: HM-XXXXX">
+        </div>
+        <div class="form-group">
+          <label>Nama Sesuai KTP</label>
+          <input type="text" id="verifyName" placeholder="Nama Lengkap Tamu">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="verifyPayment()">✔️ Verifikasi & Kirim Notif Lunas</button>
+    </div>
+  </section>
+
+  <section class="section" id="section-booking">
+    <h2 class="section-title">📋 Semua Riwayat Booking</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Kode</th><th>Tamu</th><th>Kamar</th><th>Check-in</th>
+            <th>Check-out</th><th>Total</th><th>Status</th><th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="bookingAdminTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="section-kamar">
+    <h2 class="section-title">🛏️ Kelola Kamar</h2>
+    <div class="form-card">
+      <h3 class="form-subtitle">➕ Tambah / Edit Kamar</h3>
+      <input type="hidden" id="editRoomId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nomor Room *</label>
+          <input type="text" id="roomNo" placeholder="Contoh: 101">
+        </div>
+        <div class="form-group">
+          <label>Nama Kamar *</label>
+          <input type="text" id="roomName" placeholder="Contoh: Standard AC">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Harga / Malam (Rp) *</label>
+          <input type="number" id="roomPrice" placeholder="250000">
+        </div>
+        <div class="form-group">
+          <label>Kapasitas Tamu *</label>
+          <input type="number" id="roomCap" value="2">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Fasilitas (pisah koma)</label>
+        <input type="text" id="roomFacil" placeholder="AC, TV, WiFi">
+      </div>
+      <div class="form-group">
+        <label>URL Gambar (opsional)</label>
+        <input type="url" id="roomImg" placeholder="https://...">
+      </div>
+      <button class="btn-primary" onclick="saveRoom()">💾 Simpan Kamar</button>
+      <button class="btn-warning" onclick="resetRoomForm()">Reset</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th><th>Room</th><th>Nama</th><th>Harga</th>
+            <th>Kapasitas</th><th>Fasilitas</th><th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="roomAdminTable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="section-dapur">
+    <h2 class="section-title">🍽️ Pesanan Dapur (Kitchen)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Kode</th><th>Kamar / Nama</th><th>Pesanan</th><th>Total</th><th>Status</th><th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="foodAdminTable"></tbody>
+      </table>
+    </div>
+
+    <div class="form-card">
+      <h3 class="form-subtitle">➕ Tambah Menu Dapur</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nama Menu *</label>
+          <input type="text" id="foodName" placeholder="Nasi Goreng">
+        </div>
+        <div class="form-group">
+          <label>Harga (Rp) *</label>
+          <input type="number" id="foodPrice" placeholder="25000">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Deskripsi Singkat</label>
+        <input type="text" id="foodDesc" placeholder="Nasi goreng telur + ayam">
+      </div>
+      <button class="btn-primary" onclick="saveFood()">💾 Simpan Menu</button>
+    </div>
+    <div id="foodList"></div>
+  </section>
+
+  <section class="section" id="section-rekening">
+    <h2 class="section-title">🏦 Info Rekening Bank</h2>
+    <div class="form-card">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nama Bank</label>
+          <input type="text" id="bankName" placeholder="BCA / Mandiri">
+        </div>
+        <div class="form-group">
+          <label>Nomor Rekening</label>
+          <input type="text" id="bankNo" placeholder="1234567890">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Atas Nama</label>
+        <input type="text" id="bankOwner" placeholder="Nama pemilik rekening">
+      </div>
+      <button class="btn-primary" onclick="saveBank()">💾 Simpan Rekening</button>
+    </div>
+    <div id="bankList"></div>
+  </section>
+
+</div>
+
+<footer id="mainFooter" style="display:none;">
+  © 2025 Hotel Melati — Sistem Reservasi Sederhana<br>
+  Halaman Admin Khusus Pengelola
+</footer>
+
+<div class="toast" id="toast">Berhasil!</div>
+
+<script>
+const DEFAULT_ROOMS = [
+  { id: 'R1', roomNo: '101', name: 'Standard AC', price: 250000, capacity: 2, facil: 'AC, TV, WiFi, KM Dalam', image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600' },
+  { id: 'R2', roomNo: '102', name: 'Standard AC', price: 250000, capacity: 2, facil: 'AC, TV, WiFi, KM Dalam', image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600' },
+  { id: 'R3', roomNo: '103', name: 'Deluxe', price: 400000, capacity: 3, facil: 'AC, TV, WiFi, Air Panas, Kulkas', image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=600' },
+  { id: 'R4', roomNo: '201', name: 'VIP', price: 600000, capacity: 4, facil: 'AC, Smart TV, WiFi, Air Panas, Kulkas, Balkon', image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600' }
+];
+const DEFAULT_BANKS = [
+  { id: 'B1', name: 'BCA', no: '1234567890', owner: 'Hotel Melati' },
+  { id: 'B2', name: 'Mandiri', no: '9876543210', owner: 'Hotel Melati' }
+];
+const DEFAULT_FOODS = [
+  { id: 'F1', name: 'Nasi Goreng Spesial', price: 35000, desc: 'Nasi goreng + telur + ayam' },
+  { id: 'F2', name: 'Mie Goreng Jawa', price: 30000, desc: 'Mie goreng bumbu jawa' },
+  { id: 'F3', name: 'Ayam Bakar + Nasi', price: 45000, desc: 'Ayam bakar madu + lalapan' },
+  { id: 'F4', name: 'Es Teh Manis', price: 10000, desc: 'Teh manis dingin' },
+  { id: 'F5', name: 'Jus Alpukat', price: 20000, desc: 'Alpukat segar' }
+];
+
+let rooms = JSON.parse(localStorage.getItem('hm_rooms')) || DEFAULT_ROOMS;
+let bookings = JSON.parse(localStorage.getItem('hm_bookings')) || [];
+let banks = JSON.parse(localStorage.getItem('hm_banks')) || DEFAULT_BANKS;
+let foods = JSON.parse(localStorage.getItem('hm_foods')) || DEFAULT_FOODS;
+let foodOrders = JSON.parse(localStorage.getItem('hm_foodOrders')) || [];
+const ADMIN_PASS = 'admin123';
+
+function formatRp(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
+function saveAll() {
+  localStorage.setItem('hm_rooms', JSON.stringify(rooms));
+  localStorage.setItem('hm_bookings', JSON.stringify(bookings));
+  localStorage.setItem('hm_banks', JSON.stringify(banks));
+  localStorage.setItem('hm_foods', JSON.stringify(foods));
+  localStorage.setItem('hm_foodOrders', JSON.stringify(foodOrders));
+}
+function showToast(msg, error = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (error ? ' error' : '');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ================= SISTEM NOTIFIKASI (ADMIN KE CLIENT) ================= */
+function sendNotification(booking, title, message, type = 'info') {
+  let currentNotifs = JSON.parse(localStorage.getItem('hm_notifications')) || [];
+  
+  const notif = {
+    id: 'N' + Date.now() + Math.random().toString(36).slice(2,5),
+    code: booking.code,
+    email: booking.clientId, 
+    title: title,
+    message: message,
+    type: type,
+    createdAt: new Date().toISOString(),
+    read: false // <-- Set belum dibaca
+  };
+  
+  currentNotifs.push(notif);
+  localStorage.setItem('hm_notifications', JSON.stringify(currentNotifs));
+}
+
+/* ================= AUTH & NAVIGASI ================= */
+function loginAdmin() {
+  if (document.getElementById('adminPass').value === ADMIN_PASS) {
+    document.getElementById('authSection').style.display = 'none';
+    document.getElementById('mainHeader').style.display = 'flex';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('mainFooter').style.display = 'block';
+    renderAdmin();
+    showToast('✅ Login berhasil!');
+    showSection('dashboard');
+  } else {
+    showToast('❌ Password salah!', true);
+  }
+}
+
+function logoutAdmin() {
+  document.getElementById('authSection').style.display = 'block';
+  document.getElementById('mainHeader').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('mainFooter').style.display = 'none';
+  document.getElementById('adminPass').value = '';
+  showToast('✅ Logout berhasil.');
+}
+
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ================= VERIFIKASI PEMBAYARAN (OTOMATIS NOTIF) ================= */
+function verifyPayment() {
+  const code = document.getElementById('verifyCode').value.trim().toUpperCase();
+  const name = document.getElementById('verifyName').value.trim().toLowerCase();
+
+  if (!code || !name) return showToast('Isi Kode Booking dan Nama Tamu!', true);
+
+  const booking = bookings.find(b => b.code.toUpperCase() === code && b.guestName.toLowerCase().includes(name));
+
+  if (!booking) return showToast('❌ Kode Booking atau Nama tidak cocok!', true);
+  if (booking.status === 'confirmed') return showToast('ℹ️ Booking ini sudah lunas/terkonfirmasi sebelumnya.', true);
+  if (booking.status === 'cancelled') return showToast('❌ Booking ini sudah dibatalkan.', true);
+
+  booking.status = 'confirmed';
+  const msg = `✅ Pembayaran LUNAS untuk Kode Booking ${booking.code}.\n\nDetail Menginap:\nCheck-in: ${booking.checkin} (Mulai 14:00 WIB)\nCheck-out: ${booking.checkout} (Sebelum 12:00 WIB)\nKamar: Room ${booking.roomNo} - ${booking.roomName}\n\nTunjukkan notifikasi ini atau struk PDF Anda ke resepsionis saat tiba. Terima kasih!`;
+  sendNotification(booking, 'Pembayaran Lunas', msg, 'important');
+
+  saveAll();
+  document.getElementById('verifyCode').value = '';
+  document.getElementById('verifyName').value = '';
+  renderAdmin();
+  showToast(`✅ Pembayaran Rp ${booking.total.toLocaleString('id-ID')} BERHASIL diverifikasi & Notif terkirim!`);
+}
+
+/* ================= UPDATE STATUS (OTOMATIS NOTIF) ================= */
+function setStatus(code, status) {
+  const b = bookings.find(x => x.code === code);
+  if (!b) return;
+  
+  b.status = status;
+  
+  if (status === 'checkedin') {
+    const msg = `🔑 Kamar Anda Sudah Siap!\n\nHalo ${b.guestName}, silakan menuju ke Resepsionis untuk serah terima kunci Room ${b.roomNo}. Selamat beristirahat!`;
+    sendNotification(b, 'Check-in Berhasil', msg, 'success');
+  } else if (status === 'checkedout') {
+    const msg = `🙏 Terima Kasih Telah Menginap!\n\nTerima kasih ${b.guestName} telah memilih Hotel Melati. Kami berharap dapat melayani Anda kembali di lain kesempatan. Hati-hati di jalan!`;
+    sendNotification(b, 'Check-out Selesai', msg, 'info');
+  } else if (status === 'cancelled') {
+    const msg = `❌ Booking Dibatalkan.\n\nMohon maaf, pesanan Anda dengan kode ${b.code} telah dibatalkan oleh Admin. Silakan hubungi pihak hotel jika ada pertanyaan.`;
+    sendNotification(b, 'Booking Dibatalkan', msg, 'error');
+  }
+
+  saveAll(); 
+  renderAdmin(); 
+  showToast('Status berhasil diupdate! Notifikasi terkirim ke tamu.');
+}
+
+function setFoodStatus(code, status) {
+  const o = foodOrders.find(x => x.code === code);
+  if (o) { o.status = status; saveAll(); renderAdmin(); showToast('Status pesanan dapur diupdate!'); }
+}
+
+/* ================= RENDER ADMIN ================= */
+function renderAdmin() {
+  const total = bookings.length;
+  const confirmed = bookings.filter(b => b.status === 'confirmed').length;
+  const pending = bookings.filter(b => b.status === 'pending').length;
+  const income = bookings.filter(b => ['confirmed', 'checkedin', 'checkedout'].includes(b.status)).reduce((s, b) => s + b.total, 0);
+
+  document.getElementById('statsBox').innerHTML = `
+    <div class="stat-box"><div class="num">${rooms.length}</div><div class="lbl">Kamar</div></div>
+    <div class="stat-box"><div class="num">${total}</div><div class="lbl">Total Booking</div></div>
+    <div class="stat-box"><div class="num">${pending}</div><div class="lbl">Belum Lunas</div></div>
+    <div class="stat-box"><div class="num">${confirmed}</div><div class="lbl">Lunas</div></div>
+    <div class="stat-box"><div class="num" style="font-size:1rem;">${formatRp(income)}</div><div class="lbl">Pendapatan Masuk</div></div>
+  `;
+
+  document.getElementById('roomAdminTable').innerHTML = rooms.map((r, i) => `
+    <tr>
+      <td>${i + 1}</td><td><b>${r.roomNo}</b></td><td>${r.name}</td><td>${formatRp(r.price)}</td>
+      <td>${r.capacity}</td><td style="font-size:.75rem;">${r.facil || '-'}</td>
+      <td>
+        <button class="btn-warning btn-sm" onclick="editRoom('${r.id}')">✏️</button>
+        <button class="btn-danger btn-sm" onclick="deleteRoom('${r.id}')">🗑️</button>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="7" class="empty">Belum ada kamar</td></tr>';
+
+  document.getElementById('bookingAdminTable').innerHTML = bookings.slice().reverse().map(b => `
+    <tr>
+      <td><b>${b.code}</b></td>
+      <td>${b.guestName}<br><small>${b.guestPhone}</small></td>
+      <td>Room ${b.roomNo}<br><small>${b.roomName}</small></td>
+      <td>${b.checkin}<br><small style="color:#777;">14:00 WIB</small></td>
+      <td>${b.checkout}<br><small style="color:#777;">12:00 WIB</small></td>
+      <td>${formatRp(b.total)}</td>
+      <td><span class="status ${b.status}">${statusLabel(b.status)}</span></td>
+      <td>
+        ${b.status === 'confirmed' ? `<button class="btn-warning btn-sm" onclick="setStatus('${b.code}','checkedin')">Check-in</button>` : ''}
+        ${b.status === 'checkedin' ? `<button class="btn-warning btn-sm" onclick="setStatus('${b.code}','checkedout')">Check-out</button>` : ''}
+        ${b.status === 'pending' ? `<button class="btn-danger btn-sm" onclick="setStatus('${b.code}','cancelled')">Batal</button>` : ''}
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="8" class="empty">Belum ada booking</td></tr>';
+
+  document.getElementById('foodAdminTable').innerHTML = foodOrders.slice().reverse().map(o => `
+    <tr>
+      <td><b>${o.code}</b></td><td>Kamar ${o.roomNo}<br><small>a.n. ${o.guestName}</small></td>
+      <td>${o.items.map(i => `${i.qty}x ${i.name}`).join('<br>')}</td><td>${formatRp(o.total)}</td>
+      <td><span class="status ${o.status === 'pending' ? 'pending' : o.status === 'proses' ? 'checkedin' : 'confirmed'}">${o.status.toUpperCase()}</span></td>
+      <td>
+        ${o.status === 'pending' ? `<button class="btn-warning btn-sm" onclick="setFoodStatus('${o.code}','proses')">Proses</button>` : ''}
+        ${o.status === 'proses' ? `<button class="btn-primary btn-sm" onclick="setFoodStatus('${o.code}','selesai')">Selesai</button>` : ''}
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="6" class="empty">Belum ada pesanan dapur</td></tr>';
+
+  document.getElementById('foodList').innerHTML = foods.map(f => `
+    <div class="bank-card">
+      <div><div class="bank-name">🍽️ ${f.name}</div><div>${formatRp(f.price)}</div><small>${f.desc}</small></div>
+      <button class="btn-danger btn-sm" onclick="deleteFood('${f.id}')">Hapus</button>
+    </div>
+  `).join('');
+
+  document.getElementById('bankList').innerHTML = banks.map(bk => `
+    <div class="bank-card">
+      <div><div class="bank-name">🏦 ${bk.name}</div><div class="bank-no">${bk.no}</div><small>a.n. ${bk.owner}</small></div>
+      <button class="btn-danger btn-sm" onclick="deleteBank('${bk.id}')">Hapus</button>
+    </div>
+  `).join('');
+}
+
+function statusLabel(s) {
+  return { pending: '⏳ Menunggu Pembayaran', confirmed: '✅ Lunas', checkedin: '🔵 Check-in', checkedout: '⚪ Selesai (Done)', cancelled: '❌ Dibatalkan' }[s] || s;
+}
+
+/* ================= CRUD KAMAR ================= */
+function saveRoom() {
+  const id = document.getElementById('editRoomId').value;
+  const data = {
+    roomNo: document.getElementById('roomNo').value.trim(),
+    name: document.getElementById('roomName').value.trim(),
+    price: parseInt(document.getElementById('roomPrice').value),
+    capacity: parseInt(document.getElementById('roomCap').value) || 2,
+    facil: document.getElementById('roomFacil').value.trim(),
+    image: document.getElementById('roomImg').value.trim()
+  };
+  if (!data.roomNo || !data.name || !data.price) return showToast('Lengkapi data!', true);
+  
+  if (id) {
+    const idx = rooms.findIndex(r => r.id === id);
+    rooms[idx] = { ...rooms[idx], ...data };
+    showToast('✅ Kamar diupdate');
+  } else {
+    rooms.push({ id: 'R' + Date.now(), ...data });
+    showToast('✅ Kamar ditambahkan');
+  }
+  saveAll(); resetRoomForm(); renderAdmin();
+}
+
+function editRoom(id) {
+  const r = rooms.find(x => x.id === id);
+  document.getElementById('editRoomId').value = r.id;
+  document.getElementById('roomNo').value = r.roomNo;
+  document.getElementById('roomName').value = r.name;
+  document.getElementById('roomPrice').value = r.price;
+  document.getElementById('roomCap').value = r.capacity;
+  document.getElementById('roomFacil').value = r.facil;
+  document.getElementById('roomImg').value = r.image || '';
+  window.scrollTo({ top: document.getElementById('mainApp').offsetTop, behavior: 'smooth' });
+}
+
+function deleteRoom(id) {
+  if (!confirm('Hapus kamar ini?')) return;
+  rooms = rooms.filter(r => r.id !== id);
+  saveAll(); renderAdmin(); showToast('🗑️ Kamar dihapus');
+}
+
+function resetRoomForm() {
+  document.getElementById('editRoomId').value = '';
+  ['roomNo', 'roomName', 'roomPrice', 'roomFacil', 'roomImg'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('roomCap').value = 2;
+}
+
+/* ================= CRUD MENU DAPUR ================= */
+function saveFood() {
+  const name = document.getElementById('foodName').value.trim();
+  const price = parseInt(document.getElementById('foodPrice').value);
+  const desc = document.getElementById('foodDesc').value.trim();
+  if (!name || !price) return showToast('Lengkapi Nama dan Harga Menu!', true);
+  
+  foods.push({ id: 'F' + Date.now(), name, price, desc });
+  saveAll();
+  document.getElementById('foodName').value = '';
+  document.getElementById('foodPrice').value = '';
+  document.getElementById('foodDesc').value = '';
+  renderAdmin(); showToast('✅ Menu ditambahkan');
+}
+
+function deleteFood(id) {
+  if (!confirm('Hapus menu ini?')) return;
+  foods = foods.filter(f => f.id !== id);
+  saveAll(); renderAdmin();
+}
+
+/* ================= CRUD BANK ================= */
+function saveBank() {
+  const name = document.getElementById('bankName').value.trim();
+  const no = document.getElementById('bankNo').value.trim();
+  const owner = document.getElementById('bankOwner').value.trim();
+  if (!name || !no || !owner) return showToast('Lengkapi data!', true);
+  
+  banks.push({ id: 'B' + Date.now(), name, no, owner });
+  saveAll();
+  document.getElementById('bankName').value = '';
+  document.getElementById('bankNo').value = '';
+  document.getElementById('bankOwner').value = '';
+  renderAdmin(); showToast('✅ Rekening ditambahkan');
+}
+
+function deleteBank(id) {
+  if (!confirm('Hapus rekening?')) return;
+  banks = banks.filter(b => b.id !== id);
+  saveAll(); renderAdmin();
+}
+</script>
+</body>
+</html>

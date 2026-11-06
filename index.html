@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotel Melati - Booking Kamar</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+/* ================= RESET & DASAR ================= */
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,sans-serif; }
+body { background:#f4f6f9; color:#333; }
+header { background:linear-gradient(135deg,#0f5132,#198754); color:#fff; padding:15px 25px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; flex-wrap:wrap; gap:10px; box-shadow:0 2px 10px rgba(0,0,0,.2); }
+header h1 { font-size:1.4rem; }
+header h1 small { font-size:.7rem; display:block; opacity:.8; font-weight:400; }
+header nav { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+header nav button { background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.3); padding:8px 14px; border-radius:6px; cursor:pointer; font-size:.85rem; transition:.2s; display:flex; align-items:center; gap:5px; }
+header nav button:hover, header nav button.active { background:#fff; color:#0f5132; }
+
+.bell-container { position:relative; display:inline-block; }
+.bell-icon { font-size:1.4rem; cursor:pointer; position:relative; user-select:none; }
+.bell-badge { position:absolute; top:-5px; right:-8px; background:#dc3545; color:#fff; border-radius:50%; padding:2px 6px; font-size:.65rem; font-weight:700; display:none; animation: pulse 1s infinite; }
+.bell-badge.show { display:block; }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+.container { max-width:1100px; margin:0 auto; padding:20px; }
+.hero { background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600') center/cover; color:#fff; text-align:center; padding:60px 20px; }
+.hero h2 { font-size:2rem; margin-bottom:8px; }
+.section { display:none; }
+.section.active { display:block; }
+.section-title { font-size:1.4rem; margin:20px 0 15px; color:#0f5132; }
+.form-subtitle { font-size:.95rem; color:#0f5132; margin-bottom:10px; border-bottom:2px solid #e7f5ee; padding-bottom:5px; }
+
+.room-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px; }
+.room-card { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,.08); display:flex; flex-direction:column; transition:.2s; }
+.room-card:hover { transform:translateY(-3px); box-shadow:0 8px 22px rgba(0,0,0,.15); }
+.room-card img { width:100%; height:170px; object-fit:cover; }
+.room-body { padding:16px; flex:1; display:flex; flex-direction:column; }
+.room-body h3 { color:#0f5132; font-size:1.1rem; margin-bottom:4px; }
+.room-no { display:inline-block; background:#0f5132; color:#fff; padding:3px 10px; border-radius:5px; font-size:.75rem; margin-bottom:8px; align-self:flex-start; }
+.room-facil { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; }
+.room-facil span { background:#e7f5ee; color:#0f5132; padding:3px 8px; border-radius:20px; font-size:.7rem; }
+.room-price { font-size:1.2rem; font-weight:700; color:#ff6b35; margin-top:auto; }
+.room-price small { font-size:.75rem; color:#777; font-weight:400; }
+.btn-book { background:#198754; color:#fff; border:none; padding:10px; border-radius:8px; margin-top:10px; cursor:pointer; font-weight:600; transition:.2s; }
+.btn-book:hover { background:#0f5132; }
+.btn-disabled { background:#ccc !important; cursor:not-allowed; color:#777 !important; }
+
+.form-card { background:#fff; border-radius:12px; padding:22px; box-shadow:0 4px 15px rgba(0,0,0,.08); margin-bottom:20px; }
+.form-group { margin-bottom:14px; }
+.form-group label { display:block; font-weight:600; margin-bottom:5px; font-size:.85rem; color:#444; }
+.form-group input, .form-group select, .form-group textarea { width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:.9rem; }
+.form-group input:focus, .form-group select:focus { outline:2px solid #198754; border-color:#198754; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.btn-primary { background:#198754; color:#fff; border:none; padding:12px 20px; border-radius:8px; font-size:.95rem; font-weight:600; cursor:pointer; transition:.2s; }
+.btn-primary:hover { background:#0f5132; }
+.menu-item { display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #ddd; padding:10px 0; }
+.menu-item:last-child { border-bottom:none; }
+.menu-info h4 { font-size:.95rem; color:#333; }
+.menu-info p { font-size:.8rem; color:#777; }
+.menu-price { font-weight:700; color:#ff6b35; margin-right:15px; }
+.menu-input { width:60px !important; text-align:center; padding:5px !important; }
+
+.summary { background:#f0f8f4; padding:15px; border-radius:8px; margin:15px 0; font-size:.9rem; border:1px dashed #198754; }
+.summary .row { display:flex; justify-content:space-between; padding:4px 0; }
+.summary .total { font-weight:700; color:#ff6b35; font-size:1.15rem; border-top:1px dashed #ccc; padding-top:10px; margin-top:6px; }
+.status { padding:4px 12px; border-radius:20px; font-size:.75rem; font-weight:600; display:inline-block; }
+.status.confirmed { background:#d4edda; color:#155724; }
+.status.pending { background:#fff3cd; color:#856404; }
+.status.cancelled { background:#f8d7da; color:#721c24; }
+.status.checkedin { background:#cfe2ff; color:#084298; }
+.status.checkedout { background:#e2e3e5; color:#41464b; }
+.badge-kosong { background:#d4edda; color:#155724; padding:3px 8px; border-radius:5px; font-size:.7rem; font-weight:600; }
+.badge-penuh { background:#f8d7da; color:#721c24; padding:3px 8px; border-radius:5px; font-size:.7rem; font-weight:600; }
+.bank-card { background:#fff; border-radius:10px; padding:15px; margin-bottom:12px; border-left:5px solid #198754; box-shadow:0 2px 8px rgba(0,0,0,.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+.bank-card .bank-name { font-weight:700; color:#0f5132; font-size:1rem; }
+.bank-card .bank-no { font-family:'Courier New',monospace; font-size:1rem; letter-spacing:1px; }
+.btn-copy { background:#198754; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:.75rem; }
+.modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; justify-content:center; align-items:center; padding:20px; }
+.modal.active { display:flex; }
+.modal-content { background:#fff; border-radius:12px; max-width:550px; width:100%; max-height:90vh; overflow-y:auto; padding:25px; position:relative; }
+.modal-content h2 { color:#0f5132; margin-bottom:15px; font-size:1.2rem; }
+.close-btn { position:absolute; top:10px; right:14px; background:none; border:none; font-size:1.8rem; cursor:pointer; color:#999; }
+.toast { position:fixed; bottom:25px; right:25px; background:#198754; color:#fff; padding:14px 22px; border-radius:8px; box-shadow:0 5px 20px rgba(0,0,0,.3); transform:translateX(400px); transition:.4s; z-index:2000; max-width:300px; }
+.toast.show { transform:translateX(0); }
+.toast.error { background:#dc3545; }
+.empty { text-align:center; color:#999; padding:40px; }
+.note { font-size:.8rem; color:#777; font-style:italic; }
+.info-box { background:#e7f3ff; border-left:4px solid #0d6efd; padding:12px; border-radius:6px; font-size:.85rem; color:#084298; margin-bottom:15px; }
+footer { background:#0f5132; color:#fff; text-align:center; padding:20px; margin-top:30px; font-size:.85rem; }
+
+.auth-container { max-width:400px; margin:50px auto; background:#fff; padding:30px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.1); }
+.auth-tabs { display:flex; margin-bottom:20px; border-bottom:2px solid #eee; }
+.auth-tab { flex:1; padding:10px; text-align:center; cursor:pointer; font-weight:600; color:#777; }
+.auth-tab.active { color:#198754; border-bottom:2px solid #198754; margin-bottom:-2px; }
+.btn-google { background:#db4437; color:#fff; width:100%; padding:12px; border:none; border-radius:8px; font-weight:600; font-size:.95rem; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:10px; margin-bottom:15px; }
+.divider { text-align:center; margin:15px 0; color:#999; font-size:.85rem; position:relative; }
+.divider::before, .divider::after { content:""; position:absolute; top:50%; width:40%; height:1px; background:#ddd; }
+.divider::before { left:0; } .divider::after { right:0; }
+.notif-dropdown { display:none; position:absolute; top:45px; right:0; width:320px; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2); padding:15px; z-index:500; }
+.notif-dropdown.active { display:block; }
+.notif-dropdown h4 { color:#0f5132; margin-bottom:10px; font-size:1rem; border-bottom:1px solid #eee; padding-bottom:8px; }
+
+/* ================= PERBAIKAN WARNA & BACA NOTIFIKASI ================= */
+.notif-item { 
+  background: #f9fffc !important; 
+  border-left: 4px solid #ccc; /* Default abu-abu (sudah dibaca) */
+  padding: 12px; 
+  border-radius: 6px; 
+  margin-bottom: 10px; 
+  font-size: .85rem; 
+  white-space: pre-line; 
+  color: #000000 !important;
+}
+.notif-item.unread {
+  border-left: 4px solid #0d6efd; /* Garis biru untuk yang belum dibaca */
+  background: #e7f3ff !important;
+}
+.notif-item b {
+  color: #0f5132 !important; 
+}
+.notif-item.penting { 
+  background: #fff3cd !important; 
+  border-left-color: #ffc107 !important; 
+  color: #000000 !important;
+}
+.notif-item .notif-time { 
+  font-size: .7rem; 
+  color: #555555 !important; 
+  margin-top: 8px; 
+  display: block; 
+}
+
+#receiptArea { display:none; padding:20px; background:#fff; }
+
+@media print {
+  body * { visibility: hidden; }
+  #receiptArea, #receiptArea * { visibility: visible; }
+  #receiptArea { display:block !important; position:absolute; left:0; top:0; width:100%; }
+  .no-print { display:none !important; }
+}
+@media(max-width:600px) {
+  .hero h2 { font-size:1.5rem; }
+  .form-row { grid-template-columns:1fr; }
+  header h1 { font-size:1.1rem; }
+  header nav button { font-size:.75rem; padding:6px 10px; }
+  .notif-dropdown { width:280px; right:-50px; }
+}
+</style>
+</head>
+<body>
+
+<header class="no-print" id="mainHeader" style="display:none;">
+  <h1>🏨 Hotel Melati <small>Reservasi & Booking Online</small></h1>
+  <nav>
+    <button onclick="showSection('home')" class="active" id="nav-home">🏠 Beranda</button>
+    <button onclick="showSection('booking')" id="nav-booking">📝 Booking Kamar</button>
+    <button onclick="showSection('kitchen')" id="nav-kitchen">🍽️ Menu Dapur</button>
+    <button onclick="showSection('history')" id="nav-history">📜 Riwayat Saya</button>
+    <button onclick="showSection('status')" id="nav-status">📋 Cek Status</button>
+    
+    <div class="bell-container">
+      <span class="bell-icon" onclick="toggleNotif()">🔔<span class="bell-badge" id="notifBadge">0</span></span>
+      <div class="notif-dropdown" id="notifDropdown">
+        <h4>🔔 Notifikasi Anda</h4>
+        <div id="notifList"><p class="note">Belum ada notifikasi.</p></div>
+      </div>
+    </div>
+
+    <button onclick="logout()" style="background:#dc3545; border:none; margin-left:10px;">🚪 Logout (<span id="userNameDisplay"></span>)</button>
+    <button onclick="window.location.href='admin.html'" style="background:#ff6b35; border:none;">🔐 Admin</button>
+  </nav>
+</header>
+
+<div class="container no-print" id="authSection">
+  <div class="auth-container">
+    <div style="text-align:center; margin-bottom:20px;">
+      <h2 style="color:#0f5132; font-size:1.5rem;">🏨 Hotel Melati</h2>
+      <p class="note">Silakan masuk untuk memesan kamar</p>
+    </div>
+    
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuthTab('login')" id="tabLogin">Login</div>
+      <div class="auth-tab" onclick="switchAuthTab('register')" id="tabRegister">Daftar Akun</div>
+    </div>
+
+    <form id="formLogin" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" required placeholder="email@contoh.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" required placeholder="Password">
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%;">Masuk</button>
+      
+      <div class="divider">atau</div>
+      <button type="button" class="btn-google" onclick="loginGoogle()">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20" alt="G"> Login dengan Google
+      </button>
+    </form>
+
+    <form id="formRegister" onsubmit="handleRegister(event)" style="display:none;">
+      <div class="form-group">
+        <label>Nama Lengkap (Sesuai KTP)</label>
+        <input type="text" id="regName" required placeholder="Nama Lengkap">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="regEmail" required placeholder="email@contoh.com">
+      </div>
+      <div class="form-group">
+        <label>Password (Min 6 Karakter)</label>
+        <input type="password" id="regPass" required placeholder="Password" minlength="6">
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%;">Daftar Sekarang</button>
+    </form>
+  </div>
+</div>
+
+<section class="hero no-print" id="hero" style="display:none;">
+  <h2>Selamat Datang di Hotel Melati</h2>
+  <p>Kenyamanan & pelayanan terbaik untuk Anda 💚</p>
+</section>
+
+<div class="container no-print" id="mainApp" style="display:none;">
+
+  <section class="section active" id="section-home">
+    <h2 class="section-title">🛏️ Kamar Tersedia</h2>
+    <div class="info-box">
+      ℹ️ <b>Info Ketersediaan:</b> Pilih Tanggal Check-in & Check-out di bawah ini untuk melihat kamar mana yang masih kosong atau sudah penuh.
+    </div>
+    <div class="form-card" style="padding:15px; margin-bottom:20px;">
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Cek Ketersediaan (Check-in)</label>
+          <input type="date" id="homeCheckin" onchange="renderRooms()">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Cek Ketersediaan (Check-out)</label>
+          <input type="date" id="homeCheckout" onchange="renderRooms()">
+        </div>
+      </div>
+    </div>
+    <div class="room-grid" id="roomGrid"></div>
+  </section>
+
+  <section class="section" id="section-booking">
+    <h2 class="section-title">📝 Form Booking Kamar</h2>
+    <div class="form-card">
+      <form id="bookingForm" onsubmit="submitBooking(event)">
+        <div class="info-box">
+          ℹ️ Check-in mulai pukul <b>14:00 WIB</b> dan Check-out pukul <b>12:00 WIB</b>.
+        </div>
+
+        <h3 class="form-subtitle">Data Pemesan</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nama Lengkap *</label>
+            <input type="text" id="guestName" required readonly style="background:#e9ecef;">
+          </div>
+          <div class="form-group">
+            <label>No. HP / WhatsApp *</label>
+            <input type="tel" id="guestPhone" required placeholder="08xxx">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" id="guestEmail" required readonly style="background:#e9ecef;">
+        </div>
+        <div class="form-group">
+          <label>Alamat</label>
+          <textarea id="guestAddress" rows="2" placeholder="Alamat lengkap"></textarea>
+        </div>
+
+        <h3 class="form-subtitle">Detail Menginap</h3>
+        <div class="form-group">
+          <label>Pilih Kamar *</label>
+          <select id="roomSelect" required onchange="calculateTotal()">
+            <option value="">-- Pilih Kamar --</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tanggal Check-in *</label>
+            <input type="date" id="checkin" required onchange="calculateTotal()">
+          </div>
+          <div class="form-group">
+            <label>Tanggal Check-out *</label>
+            <input type="date" id="checkout" required onchange="calculateTotal()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Jumlah Tamu *</label>
+            <input type="number" id="guests" min="1" value="2" required>
+          </div>
+          <div class="form-group">
+            <label>Permintaan Khusus</label>
+            <input type="text" id="notes" placeholder="Contoh: lantai 2">
+          </div>
+        </div>
+
+        <div class="summary" id="summary" style="display:none;">
+          <div class="row"><span>Kamar</span><span id="sumRoom">-</span></div>
+          <div class="row"><span>Harga / malam</span><span id="sumPrice">Rp 0</span></div>
+          <div class="row"><span>Jumlah malam</span><span id="sumNights">0</span></div>
+          <div class="row"><span>Jumlah tamu</span><span id="sumGuests">-</span></div>
+          <div class="row total"><span>TOTAL</span><span id="sumTotal">Rp 0</span></div>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width:100%;">✅ Kirim Booking</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="section" id="section-kitchen">
+    <h2 class="section-title">🍽️ Pesan Makanan & Minuman</h2>
+    <div class="form-card">
+      <form id="foodForm" onsubmit="submitFoodOrder(event)">
+        <div class="info-box">
+          ℹ️ Silakan isi identitas dan pilih menu. Pesanan akan diantar ke kamar Anda.
+        </div>
+
+        <h3 class="form-subtitle">Identitas Pemesan</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nomor Kamar *</label>
+            <input type="text" id="foodRoomNo" required placeholder="Contoh: 101">
+          </div>
+          <div class="form-group">
+            <label>Atas Nama *</label>
+            <input type="text" id="foodGuestName" required placeholder="Nama Tamu">
+          </div>
+        </div>
+
+        <h3 class="form-subtitle" style="margin-top:20px;">Pilih Menu</h3>
+        <div id="foodMenuList"></div>
+
+        <div class="summary" style="margin-top:20px;">
+          <div class="row total"><span>TOTAL PESANAN</span><span id="foodTotal">Rp 0</span></div>
+        </div>
+
+        <button type="submit" class="btn-primary" style="width:100%;">🛎️ Kirim Pesanan Dapur</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="section" id="section-history">
+    <h2 class="section-title">📜 Riwayat Booking Saya</h2>
+    <div class="info-box">
+      ℹ️ Daftar pemesanan kamar yang pernah Anda lakukan dengan akun ini.
+    </div>
+    <div id="historyList"></div>
+  </section>
+
+  <section class="section" id="section-status">
+    <h2 class="section-title">📋 Cek Status Booking</h2>
+    <div class="form-card">
+      <div class="info-box">🔍 Masukkan <b>Kode Booking</b> dan <b>Nama Lengkap Sesuai KTP</b>.</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Kode Booking</label>
+          <input type="text" id="searchCode" placeholder="Contoh: HM-123456">
+        </div>
+        <div class="form-group">
+          <label>Nama Lengkap (KTP)</label>
+          <input type="text" id="searchName" placeholder="Sesuai KTP">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="searchBooking()">🔍 Cek Status</button>
+    </div>
+    <div id="searchResult"></div>
+  </section>
+
+</div>
+
+<div class="modal no-print" id="detailModal">
+  <div class="modal-content" id="detailContent"></div>
+</div>
+
+<div id="receiptArea"></div>
+<div class="toast no-print" id="toast">Berhasil!</div>
+
+<footer class="no-print">
+  © 2025 Hotel Melati — Sistem Reservasi Sederhana<br>
+  Dibuat untuk membantu bisnis perhotelan baru 🌱
+</footer>
+
+<script>
+const DEFAULT_ROOMS = [
+  { id: 'R1', roomNo: '101', name: 'Standard AC', price: 250000, capacity: 2, facil: 'AC, TV, WiFi, KM Dalam', image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600' },
+  { id: 'R2', roomNo: '102', name: 'Standard AC', price: 250000, capacity: 2, facil: 'AC, TV, WiFi, KM Dalam', image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600' },
+  { id: 'R3', roomNo: '103', name: 'Deluxe', price: 400000, capacity: 3, facil: 'AC, TV, WiFi, Air Panas, Kulkas', image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=600' },
+  { id: 'R4', roomNo: '201', name: 'VIP', price: 600000, capacity: 4, facil: 'AC, Smart TV, WiFi, Air Panas, Kulkas, Balkon', image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600' }
+];
+const DEFAULT_BANKS = [
+  { id: 'B1', name: 'BCA', no: '1234567890', owner: 'Hotel Melati' },
+  { id: 'B2', name: 'Mandiri', no: '9876543210', owner: 'Hotel Melati' }
+];
+const DEFAULT_FOODS = [
+  { id: 'F1', name: 'Nasi Goreng Spesial', price: 35000, desc: 'Nasi goreng + telur + ayam' },
+  { id: 'F2', name: 'Mie Goreng Jawa', price: 30000, desc: 'Mie goreng bumbu jawa' },
+  { id: 'F3', name: 'Ayam Bakar + Nasi', price: 45000, desc: 'Ayam bakar madu + lalapan' },
+  { id: 'F4', name: 'Es Teh Manis', price: 10000, desc: 'Teh manis dingin' },
+  { id: 'F5', name: 'Jus Alpukat', price: 20000, desc: 'Alpukat segar' }
+];
+
+let rooms = JSON.parse(localStorage.getItem('hm_rooms')) || DEFAULT_ROOMS;
+let bookings = JSON.parse(localStorage.getItem('hm_bookings')) || [];
+let banks = JSON.parse(localStorage.getItem('hm_banks')) || DEFAULT_BANKS;
+let foods = JSON.parse(localStorage.getItem('hm_foods')) || DEFAULT_FOODS;
+let users = JSON.parse(localStorage.getItem('hm_users')) || [];
+let currentUser = JSON.parse(localStorage.getItem('hm_current_user'));
+
+function formatRp(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
+function saveAll() {
+  localStorage.setItem('hm_rooms', JSON.stringify(rooms));
+  localStorage.setItem('hm_bookings', JSON.stringify(bookings));
+  localStorage.setItem('hm_banks', JSON.stringify(banks));
+  localStorage.setItem('hm_foods', JSON.stringify(foods));
+}
+function showToast(msg, error = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (error ? ' error' : '');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+function uid(p = '') { return p + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase(); }
+function todayStr(o = 0) { const d = new Date(); d.setDate(d.getDate() + o); return d.toISOString().split('T')[0]; }
+
+/* ================= AUTHENTICATION ================= */
+function switchAuthTab(type) {
+  document.getElementById('tabLogin').classList.remove('active');
+  document.getElementById('tabRegister').classList.remove('active');
+  if(type === 'login') {
+    document.getElementById('tabLogin').classList.add('active');
+    document.getElementById('formLogin').style.display = 'block';
+    document.getElementById('formRegister').style.display = 'none';
+  } else {
+    document.getElementById('tabRegister').classList.add('active');
+    document.getElementById('formLogin').style.display = 'none';
+    document.getElementById('formRegister').style.display = 'block';
+  }
+}
+
+function handleRegister(e) {
+  e.preventDefault();
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('regPass').value;
+  if(users.find(u => u.email === email)) return showToast('❌ Email sudah terdaftar!', true);
+
+  const newUser = { id: uid('U'), name, email, pass };
+  users.push(newUser);
+  localStorage.setItem('hm_users', JSON.stringify(users));
+  showToast('✅ Pendaftaran berhasil! Silakan Login.');
+  switchAuthTab('login');
+  document.getElementById('loginEmail').value = email;
+  document.getElementById('formRegister').reset();
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value;
+  const user = users.find(u => u.email === email && u.pass === pass);
+  if(!user) return showToast('❌ Email atau Password salah!', true);
+
+  currentUser = user;
+  localStorage.setItem('hm_current_user', JSON.stringify(user));
+  checkLoginState();
+  showToast('✅ Selamat datang, ' + user.name);
+}
+
+function loginGoogle() {
+  const email = prompt("Simulasi Login Google:\nMasukkan Email Google Anda:", "user@gmail.com");
+  if(!email) return;
+  let user = users.find(u => u.email === email.toLowerCase());
+  if(!user) {
+    const name = email.split('@')[0];
+    user = { id: uid('U'), name: name, email: email.toLowerCase(), pass: 'google_oauth' };
+    users.push(user);
+    localStorage.setItem('hm_users', JSON.stringify(users));
+  }
+  currentUser = user;
+  localStorage.setItem('hm_current_user', JSON.stringify(user));
+  checkLoginState();
+  showToast('✅ Login Google berhasil!');
+}
+
+function logout() {
+  localStorage.removeItem('hm_current_user');
+  currentUser = null;
+  checkLoginState();
+  showToast('✅ Anda telah logout.');
+}
+
+function checkLoginState() {
+  if(currentUser) {
+    document.getElementById('authSection').style.display = 'none';
+    document.getElementById('mainHeader').style.display = 'flex';
+    document.getElementById('hero').style.display = 'block';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('userNameDisplay').textContent = currentUser.name.split(' ')[0];
+    
+    document.getElementById('guestName').value = currentUser.name;
+    document.getElementById('guestEmail').value = currentUser.email;
+    
+    renderRooms();
+    populateRoomSelect();
+    renderNotifications();
+    showSection('home');
+  } else {
+    document.getElementById('authSection').style.display = 'block';
+    document.getElementById('mainHeader').style.display = 'none';
+    document.getElementById('hero').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'none';
+  }
+}
+
+/* ================= NAVIGASI ================= */
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('header nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  document.getElementById('hero').style.display = name === 'home' ? 'block' : 'none';
+  
+  if (name === 'booking') populateRoomSelect();
+  if (name === 'kitchen') renderFoodMenu();
+  if (name === 'history') renderHistory();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ================= NOTIFIKASI (TERBACA & BADGE HILANG) ================= */
+function toggleNotif() { 
+  const dropdown = document.getElementById('notifDropdown');
+  const isActive = dropdown.classList.contains('active');
+  
+  if (!isActive) {
+    dropdown.classList.add('active');
+    // Tandai semua notif user ini sebagai sudah dibaca (read: true)
+    let notifs = JSON.parse(localStorage.getItem('hm_notifications')) || [];
+    notifs.forEach(n => {
+      if (n.email && n.email.toLowerCase() === currentUser.email.toLowerCase()) {
+        n.read = true;
+      }
+    });
+    localStorage.setItem('hm_notifications', JSON.stringify(notifs));
+    renderNotifications(); // Update badge jadi 0
+  } else {
+    dropdown.classList.remove('active');
+  }
+}
+
+function renderNotifications() {
+  if(!currentUser) return;
+  
+  let notifs = JSON.parse(localStorage.getItem('hm_notifications')) || [];
+  const myNotifs = notifs.filter(n => n.email && n.email.toLowerCase() === currentUser.email.toLowerCase()).reverse();
+  
+  const badge = document.getElementById('notifBadge');
+  const list = document.getElementById('notifList');
+
+  // Hitung yang belum dibaca saja
+  const unreadCount = myNotifs.filter(n => n.read === false).length;
+
+  if (unreadCount > 0) {
+    badge.textContent = unreadCount;
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
+  }
+
+  if (myNotifs.length === 0) {
+    list.innerHTML = '<p class="note">Belum ada notifikasi.</p>';
+    return;
+  }
+
+  list.innerHTML = myNotifs.map(n => `
+    <div class="notif-item ${n.type === 'important' ? 'penting' : ''} ${n.read ? '' : 'unread'}">
+      <b>${n.title || 'Pemberitahuan'}</b><br>${n.message}
+      <span class="notif-time">${new Date(n.createdAt).toLocaleString('id-ID')}</span>
+    </div>
+  `).join('');
+}
+
+window.addEventListener('storage', (e) => {
+  if (e.key === 'hm_notifications' && currentUser) {
+    renderNotifications();
+    showToast('🔔 Pesan Baru dari Admin!');
+  }
+});
+
+setInterval(() => {
+  if(currentUser) renderNotifications();
+}, 2000);
+
+/* ================= KETERSEDIAAN KAMAR ================= */
+function isRoomAvailable(roomId, checkin, checkout) {
+  if (!checkin || !checkout) return true;
+  return !bookings.some(b =>
+    b.roomId === roomId &&
+    ['pending', 'confirmed', 'checkedin'].includes(b.status) &&
+    !(checkout <= b.checkin || checkin >= b.checkout)
+  );
+}
+
+function renderRooms() {
+  if(!currentUser) return;
+  const grid = document.getElementById('roomGrid');
+  const cIn = document.getElementById('homeCheckin').value;
+  const cOut = document.getElementById('homeCheckout').value;
+
+  if (rooms.length === 0) { grid.innerHTML = '<p class="empty">Belum ada kamar.</p>'; return; }
+
+  grid.innerHTML = rooms.map(r => {
+    let isFull = false;
+    if (cIn && cOut) { isFull = !isRoomAvailable(r.id, cIn, cOut); }
+    const badge = isFull ? `<span class="badge-penuh">❌ Penuh</span>` : `<span class="badge-kosong">✅ Tersedia</span>`;
+    const btnAttr = isFull ? 'disabled' : `onclick="quickBook('${r.id}')"`;
+    const btnClass = isFull ? 'btn-book btn-disabled' : 'btn-book';
+    const btnText = isFull ? 'Kamar Penuh' : '📝 Booking';
+
+    return `
+    <div class="room-card" style="${isFull ? 'opacity:0.7;' : ''}">
+      <img src="${r.image || 'https://via.placeholder.com/400x200?text=Room'}" alt="${r.name}" onerror="this.src='https://via.placeholder.com/400x200?text=Room'">
+      <div class="room-body">
+        <span class="room-no">Room ${r.roomNo}</span>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h3>${r.name}</h3> ${badge}
+        </div>
+        <div class="room-facil" style="margin-top:8px;">${(r.facil || '').split(',').map(f => `<span>${f.trim()}</span>`).join('')}</div>
+        <div class="note">👥 Maks ${r.capacity} tamu</div>
+        <div class="room-price">${formatRp(r.price)} <small>/malam</small></div>
+        <button class="${btnClass}" ${btnAttr}>${btnText}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function quickBook(id) {
+  showSection('booking');
+  setTimeout(() => { document.getElementById('roomSelect').value = id; calculateTotal(); }, 100);
+}
+
+function populateRoomSelect() {
+  const sel = document.getElementById('roomSelect');
+  sel.innerHTML = '<option value="">-- Pilih Kamar --</option>' + rooms.map(r => `<option value="${r.id}">Room ${r.roomNo} - ${r.name} (${formatRp(r.price)})</option>`).join('');
+}
+
+function calculateTotal() {
+  const roomId = document.getElementById('roomSelect').value;
+  const checkin = document.getElementById('checkin').value;
+  const checkout = document.getElementById('checkout').value;
+  const guests = parseInt(document.getElementById('guests').value) || 1;
+  if (!roomId || !checkin || !checkout) { document.getElementById('summary').style.display = 'none'; return; }
+  const room = rooms.find(r => r.id === roomId);
+  const nights = Math.round((new Date(checkout) - new Date(checkin)) / 86400000);
+  if (nights <= 0) { document.getElementById('summary').style.display = 'none'; return; }
+  const total = room.price * nights;
+  document.getElementById('summary').style.display = 'block';
+  document.getElementById('sumRoom').textContent = `Room ${room.roomNo} - ${room.name}`;
+  document.getElementById('sumPrice').textContent = formatRp(room.price);
+  document.getElementById('sumNights').textContent = nights + ' malam';
+  document.getElementById('sumGuests').textContent = guests + ' orang';
+  document.getElementById('sumTotal').textContent = formatRp(total);
+}
+
+/* ================= SUBMIT BOOKING ================= */
+function submitBooking(e) {
+  e.preventDefault();
+  if(!currentUser) return showToast('Harap login ulang!', true);
+  const roomId = document.getElementById('roomSelect').value;
+  const room = rooms.find(r => r.id === roomId);
+  const checkin = document.getElementById('checkin').value;
+  const checkout = document.getElementById('checkout').value;
+  const guests = parseInt(document.getElementById('guests').value);
+  
+  if (!room) return showToast('Pilih kamar dulu!', true);
+  if (new Date(checkout) <= new Date(checkin)) return showToast('Checkout harus setelah checkin!', true);
+  if (new Date(checkin) < new Date(todayStr())) return showToast('Tanggal tidak boleh lewat!', true);
+  if (guests > room.capacity) return showToast(`Maksimal ${room.capacity} tamu!`, true);
+  if (!isRoomAvailable(roomId, checkin, checkout)) return showToast('Kamar sudah dibooking pada tanggal tersebut!', true);
+
+  const nights = Math.round((new Date(checkout) - new Date(checkin)) / 86400000);
+  const bookingCode = 'HM-' + uid().slice(0, 5); 
+
+  const booking = {
+    code: bookingCode,
+    clientId: currentUser.email,
+    roomId, roomNo: room.roomNo, roomName: room.name,
+    guestName: currentUser.name,
+    guestPhone: document.getElementById('guestPhone').value,
+    guestEmail: currentUser.email,
+    guestAddress: document.getElementById('guestAddress').value,
+    checkin, checkout, nights, guests,
+    notes: document.getElementById('notes').value,
+    total: room.price * nights, pricePerNight: room.price,
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  };
+  
+  bookings.push(booking);
+  saveAll();
+  showBookingSuccess(booking);
+  
+  document.getElementById('bookingForm').reset();
+  document.getElementById('guestName').value = currentUser.name;
+  document.getElementById('guestEmail').value = currentUser.email;
+  document.getElementById('summary').style.display = 'none';
+  renderRooms();
+}
+
+/* ================= CETAK & PDF ================= */
+function printReceipt(bookingCode) {
+  const b = bookings.find(x => x.code === bookingCode);
+  if (!b) return;
+  document.getElementById('receiptArea').innerHTML = generateReceiptHTML(b);
+  setTimeout(() => { window.print(); }, 300);
+}
+
+function downloadPDF(bookingCode) {
+  const b = bookings.find(x => x.code === bookingCode);
+  if (!b) return;
+  const element = document.createElement('div');
+  element.innerHTML = generateReceiptHTML(b);
+  const opt = {
+    margin: [0.5, 0.5, 0.5, 0.5],
+    filename: `Struk_Booking_${b.code}_${b.guestName}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+  showToast('⏳ Menyiapkan PDF...');
+  html2pdf().set(opt).from(element).save().then(() => {
+    showToast('✅ PDF berhasil diunduh!');
+  });
+}
+
+function generateReceiptHTML(b) {
+  return `
+    <div style="max-width:700px; margin:0 auto; padding:30px; border:1px solid #000; font-family:Arial,sans-serif; color:#000; background:#fff;">
+      <div style="text-align:center; border-bottom:2px solid #0f5132; padding-bottom:15px; margin-bottom:20px;">
+        <h1 style="margin:0; color:#0f5132; font-size:24px;">🏨 HOTEL MELATI</h1>
+        <p style="margin:5px 0; font-size:12px;">Jl. Kenangan No. 123, Jakarta | Telp: 021-1234567</p>
+        <h2 style="margin:10px 0 0 0; font-size:18px;">STRUK BUKTI BOOKING</h2>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:13px;">
+        <div><b>Kode Booking:</b> ${b.code}</div>
+        <div><b>Tanggal Pesan:</b> ${new Date(b.createdAt).toLocaleDateString('id-ID')}</div>
+      </div>
+      <table style="width:100%; border-collapse:collapse; font-size:13px; margin-bottom:20px;">
+        <tr><td style="padding:8px; border:1px solid #ccc; width:30%;"><b>Nama Tamu</b></td><td style="padding:8px; border:1px solid #ccc;">${b.guestName}</td></tr>
+        <tr><td style="padding:8px; border:1px solid #ccc;"><b>No. HP</b></td><td style="padding:8px; border:1px solid #ccc;">${b.guestPhone}</td></tr>
+        <tr><td style="padding:8px; border:1px solid #ccc;"><b>Kamar</b></td><td style="padding:8px; border:1px solid #ccc;">Room ${b.roomNo} - ${b.roomName}</td></tr>
+        <tr><td style="padding:8px; border:1px solid #ccc;"><b>Check-in</b></td><td style="padding:8px; border:1px solid #ccc;">${b.checkin} (14:00 WIB)</td></tr>
+        <tr><td style="padding:8px; border:1px solid #ccc;"><b>Check-out</b></td><td style="padding:8px; border:1px solid #ccc;">${b.checkout} (12:00 WIB)</td></tr>
+        <tr><td style="padding:8px; border:1px solid #ccc;"><b>Durasi</b></td><td style="padding:8px; border:1px solid #ccc;">${b.nights} Malam</td></tr>
+        <tr><td style="padding:8px; border:1px solid #ccc;"><b>Jumlah Tamu</b></td><td style="padding:8px; border:1px solid #ccc;">${b.guests} Orang</td></tr>
+        ${b.notes ? `<tr><td style="padding:8px; border:1px solid #ccc;"><b>Catatan</b></td><td style="padding:8px; border:1px solid #ccc;">${b.notes}</td></tr>` : ''}
+      </table>
+      <div style="background:#f0f8f4; padding:15px; border:1px solid #0f5132; text-align:right; font-size:16px; margin-bottom:20px;">
+        <b>TOTAL BAYAR: <span style="color:#0f5132; font-size:20px;">${formatRp(b.total)}</span></b>
+      </div>
+      <div style="font-size:11px; color:#555; margin-top:30px; border-top:1px dashed #ccc; padding-top:10px; text-align:center;">
+        <p>Status: ${statusLabel(b.status)}</p>
+        <p>Simpan struk ini sebagai bukti pemesanan yang sah.</p>
+      </div>
+    </div>
+  `;
+}
+
+function showBookingSuccess(b) {
+  const banksHTML = banks.length ? banks.map(bank => `
+    <div class="bank-card">
+      <div>
+        <div class="bank-name">🏦 ${bank.name}</div>
+        <div class="bank-no">${bank.no}</div>
+        <small>a.n. ${bank.owner}</small>
+      </div>
+      <button class="btn-copy" onclick="copyText('${bank.no}')">📋 Copy</button>
+    </div>`).join('') : '<p class="note">Admin belum menambahkan rekening.</p>';
+
+  document.getElementById('detailContent').innerHTML = `
+    <button class="close-btn" onclick="closeModal()">&times;</button>
+    <h2>✅ Booking Berhasil!</h2>
+    <div style="background:#d4edda;padding:15px;border-radius:8px;margin-bottom:15px;text-align:center;border:2px dashed #198754;">
+      <div style="font-size:.85rem;color:#155724;margin-bottom:5px;">KODE BOOKING ANDA</div>
+      <div style="font-size:1.5rem;font-weight:700;color:#0f5132;letter-spacing:2px;">${b.code}</div>
+      <small style="color:#155724;">Atas Nama: <b>${b.guestName}</b></small>
+    </div>
+    <div class="info-box">⚠️ <b>Penting:</b> Simpan Kode Booking ini.</div>
+    <div class="summary">
+      <div class="row"><span>Kamar</span><span>Room ${b.roomNo} - ${b.roomName}</span></div>
+      <div class="row"><span>Check-in</span><span>${b.checkin} (14:00 WIB)</span></div>
+      <div class="row"><span>Check-out</span><span>${b.checkout} (12:00 WIB)</span></div>
+      <div class="row total"><span>TOTAL BAYAR</span><span>${formatRp(b.total)}</span></div>
+    </div>
+    <div style="display:flex; gap:10px; margin-bottom:15px;">
+      <button class="btn-primary" style="flex:1; background:#0d6efd;" onclick="printReceipt('${b.code}')">🖨️ Cetak</button>
+      <button class="btn-primary" style="flex:1; background:#dc3545;" onclick="downloadPDF('${b.code}')">📥 PDF</button>
+    </div>
+    <h3 style="color:#0f5132;margin:15px 0 8px;font-size:1rem;">🏦 Transfer ke:</h3>
+    ${banksHTML}
+    <button class="btn-primary" style="width:100%;margin-top:15px; background:#ff6b35;" onclick="closeModal();showSection('history');">Lihat Riwayat Booking Saya</button>
+  `;
+  document.getElementById('detailModal').classList.add('active');
+}
+
+function copyText(text) { navigator.clipboard.writeText(text).then(() => showToast('✅ Nomor dicopy!')); }
+function closeModal() { document.getElementById('detailModal').classList.remove('active'); }
+
+/* ================= MENU DAPUR ================= */
+function renderFoodMenu() {
+  const list = document.getElementById('foodMenuList');
+  list.innerHTML = foods.map(f => `
+    <div class="menu-item">
+      <div class="menu-info"><h4>${f.name}</h4><p>${f.desc}</p></div>
+      <div style="display:flex; align-items:center; gap:15px;">
+        <span class="menu-price">${formatRp(f.price)}</span>
+        <input type="number" min="0" value="0" class="menu-input" id="qty-${f.id}" onchange="calcFoodTotal()" onkeyup="calcFoodTotal()">
+      </div>
+    </div>
+  `).join('');
+}
+
+function calcFoodTotal() {
+  let total = 0;
+  foods.forEach(f => {
+    const qty = parseInt(document.getElementById(`qty-${f.id}`).value) || 0;
+    total += (qty * f.price);
+  });
+  document.getElementById('foodTotal').textContent = formatRp(total);
+}
+
+function submitFoodOrder(e) {
+  e.preventDefault();
+  const roomNo = document.getElementById('foodRoomNo').value.trim();
+  const guestName = document.getElementById('foodGuestName').value.trim();
+  if (!roomNo || !guestName) return showToast('Isi Nomor Kamar dan Nama!', true);
+
+  let items = [], total = 0;
+  foods.forEach(f => {
+    const qty = parseInt(document.getElementById(`qty-${f.id}`).value) || 0;
+    if (qty > 0) {
+      items.push({ foodId: f.id, name: f.name, price: f.price, qty: qty, subtotal: qty * f.price });
+      total += (qty * f.price);
+    }
+  });
+
+  if (items.length === 0) return showToast('Pilih minimal 1 menu makanan/minuman!', true);
+
+  const orderCode = 'FD-' + uid().slice(0, 5);
+  const order = { code: orderCode, roomNo, guestName, items, total, status: 'pending', createdAt: new Date().toISOString() };
+  
+  let foodOrders = JSON.parse(localStorage.getItem('hm_foodOrders')) || [];
+  foodOrders.push(order);
+  localStorage.setItem('hm_foodOrders', JSON.stringify(foodOrders));
+
+  document.getElementById('foodForm').reset();
+  renderFoodMenu(); 
+  document.getElementById('foodTotal').textContent = formatRp(0);
+
+  document.getElementById('detailContent').innerHTML = `
+    <button class="close-btn" onclick="closeModal()">&times;</button>
+    <h2>✅ Pesanan Dapur Diterima!</h2>
+    <div style="background:#e7f5ee;padding:15px;border-radius:8px;margin-bottom:15px;text-align:center;">
+      <div style="font-size:1.5rem;font-weight:700;color:#0f5132;">${order.code}</div>
+    </div>
+    <div class="summary">
+      ${order.items.map(i => `<div class="row"><span>${i.qty}x ${i.name}</span><span>${formatRp(i.subtotal)}</span></div>`).join('')}
+      <div class="row total"><span>TOTAL</span><span>${formatRp(order.total)}</span></div>
+    </div>
+    <button class="btn-primary" style="width:100%;margin-top:15px;" onclick="closeModal();">Tutup</button>
+  `;
+  document.getElementById('detailModal').classList.add('active');
+}
+
+/* ================= RIWAYAT & STATUS ================= */
+function renderHistory() {
+  if(!currentUser) return;
+  const list = document.getElementById('historyList');
+  const myBookings = bookings.filter(b => b.clientId === currentUser.email);
+  if (myBookings.length === 0) { list.innerHTML = '<div class="form-card"><p class="empty">Belum ada riwayat booking.</p></div>'; return; }
+
+  list.innerHTML = myBookings.slice().reverse().map(b => `
+    <div class="form-card" style="border-left:5px solid #198754; margin-bottom:15px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+        <h3 style="color:#0f5132; font-size:1.1rem;">${b.code}</h3>
+        <span class="status ${b.status}">${statusLabel(b.status)}</span>
+      </div>
+      <p style="margin-top:8px;"><b>Atas Nama:</b> ${b.guestName}</p>
+      <p><b>Kamar:</b> Room ${b.roomNo} - ${b.roomName}</p>
+      <p><b>Check-in:</b> ${b.checkin} (14:00 WIB)</p>
+      <p><b>Check-out:</b> ${b.checkout} (12:00 WIB)</p>
+      <p style="font-size:1.1rem; font-weight:700; color:#ff6b35; margin-top:8px;">Total: ${formatRp(b.total)}</p>
+      <div style="margin-top:10px; display:flex; gap:8px;">
+        <button class="btn-primary" style="background:#0d6efd; font-size:0.8rem; padding:6px 10px;" onclick="printReceipt('${b.code}')">🖨️ Cetak</button>
+        <button class="btn-primary" style="background:#dc3545; font-size:0.8rem; padding:6px 10px;" onclick="downloadPDF('${b.code}')">📥 Unduh PDF</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function searchBooking() {
+  const code = document.getElementById('searchCode').value.trim().toUpperCase();
+  const name = document.getElementById('searchName').value.trim().toLowerCase();
+  const res = document.getElementById('searchResult');
+  if (!code || !name) return showToast('Isi Kode Booking dan Nama Lengkap!', true);
+  const found = bookings.filter(b => b.code.toUpperCase() === code && b.guestName.toLowerCase().includes(name));
+  if (found.length === 0) { res.innerHTML = '<div class="form-card"><p class="empty">❌ Booking tidak ditemukan.</p></div>'; return; }
+  res.innerHTML = found.map(b => `
+    <div class="form-card" style="border-left:5px solid #198754;">
+      <h3 style="color:#0f5132;">${b.code} <span class="status ${b.status}">${statusLabel(b.status)}</span></h3>
+      <p>📅 Check-in: <b>${b.checkin}</b> (14:00 WIB) | Check-out: <b>${b.checkout}</b> (12:00 WIB)</p>
+      <div style="margin-top:12px; display:flex; gap:8px;">
+        <button class="btn-primary" style="background:#0d6efd; font-size:0.8rem; padding:6px 10px;" onclick="printReceipt('${b.code}')">🖨️ Cetak</button>
+        <button class="btn-primary" style="background:#dc3545; font-size:0.8rem; padding:6px 10px;" onclick="downloadPDF('${b.code}')">📥 Unduh PDF</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function statusLabel(s) {
+  return { pending: '⏳ Menunggu Pembayaran', confirmed: '✅ Lunas / Terkonfirmasi', checkedin: '🔵 Sedang Check-in', checkedout: '⚪ Selesai (Done)', cancelled: '❌ Dibatalkan' }[s] || s;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  checkLoginState();
+  document.getElementById('checkin').min = todayStr();
+  document.getElementById('checkout').min = todayStr(1);
+  document.getElementById('checkin').value = todayStr(1);
+  document.getElementById('checkout').value = todayStr(2);
+  document.getElementById('homeCheckin').value = todayStr(1);
+  document.getElementById('homeCheckout').value = todayStr(2);
+  
+  document.getElementById('detailModal').addEventListener('click', e => { if (e.target.id === 'detailModal') closeModal(); });
+  document.addEventListener('click', e => {
+    const bell = document.querySelector('.bell-container');
+    if (bell && !bell.contains(e.target)) document.getElementById('notifDropdown').classList.remove('active');
+  });
+});
+</script>
+</body>
+</html>
